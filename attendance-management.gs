@@ -1,5 +1,6 @@
 var today;
 var time;
+var body;
 var DATE_COL = 1;
 var ATTENDANCE_TIME_COL = DATE_COL + 1;
 var LEAVE_TIME_COL = ATTENDANCE_TIME_COL + 1;
@@ -7,14 +8,17 @@ var START_ROW = 2;
 
 function doPost(e) {
 
-  // ƒƒbƒZ[ƒW‚ğ“ü—Í‚µ‚½“ú‚ğƒŠƒNƒGƒXƒgƒpƒ‰ƒ[ƒ^‚©‚çZo
+  // ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’å…¥åŠ›ã—ãŸæ—¥æ™‚ã‚’ãƒªã‚¯ã‚¨ã‚¹ãƒˆãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã‹ã‚‰ç®—å‡º
   calcDateTime(e);
 
-  // SpreadSheet‚É‘‚«‚İ
+  // SpreadSheetã«æ›¸ãè¾¼ã¿
   writeSpreadsheet(e);
   
-  // Slack API(chat.postMessage)‚Åw’è‚µ‚½ƒ`ƒƒƒ“ƒlƒ‹‚É’Ê’mƒƒbƒZ[ƒW
+  // Slack API(chat.postMessage)ã§æŒ‡å®šã—ãŸãƒãƒ£ãƒ³ãƒãƒ«ã«é€šçŸ¥ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸
   postMessage(createSlackApp(), e);
+  
+  MailApp.sendEmail(getProperty("TO"), "ã€å‹¤æ€ é€£çµ¡ã€‘" + today, body);
+
 }
 
 function createSlackApp() {
@@ -29,15 +33,15 @@ function calcDateTime(e) {
 }
 
 function writeSpreadsheet(e) {
-  var spreadsheet = SpreadsheetApp.openByUrl('SPREADSHEETS_URL');
+  var spreadsheet = SpreadsheetApp.openByUrl(getProperty("SPREADSHEETS_URL"));
   //var sheet = spreadsheet.getSheetByName(e.parameter.user_name);
   var sheet = spreadsheet.getSheetByName("KenichiNagaoka");
   
-  // A—ñ‚Ì2s–Ú‚©‚çÅ‰ºs‚Ü‚Å‚Ì“ú•t‚ğæ“¾
+  // Aåˆ—ã®2è¡Œç›®ã‹ã‚‰æœ€ä¸‹è¡Œã¾ã§ã®æ—¥ä»˜ã‚’å–å¾—
   var lastRow = sheet.getLastRow();
   var dateValues = sheet.getRange(START_ROW, DATE_COL, lastRow).getValues();
 
-  // Šù‚É“ú•t‚ª“ü—Í‚³‚ê‚Ä‚¢‚ê‚Î‚»‚±‚ğÅ‰ºs‚Æ‚µ‚ÄŠÔ‚ğ‘‚«‚Ş
+  // æ—¢ã«æ—¥ä»˜ãŒå…¥åŠ›ã•ã‚Œã¦ã„ã‚Œã°ãã“ã‚’æœ€ä¸‹è¡Œã¨ã—ã¦æ™‚é–“ã‚’æ›¸ãè¾¼ã‚€
   for (var row in dateValues) {
     if (formatDate(new Date(dateValues[row])) == today) {
       writeTime(e, sheet, Number(row) + 2);
@@ -45,7 +49,7 @@ function writeSpreadsheet(e) {
     }
   }
   
-  // “ú•t‚ª“ü—Í‚³‚ê‚Ä‚¢‚È‚¯‚ê‚ÎÅ‰ºs+1‚É“ú•t‚ÆŠÔ‚ğ‘‚«‚Ş
+  // æ—¥ä»˜ãŒå…¥åŠ›ã•ã‚Œã¦ã„ãªã‘ã‚Œã°æœ€ä¸‹è¡Œ+1ã«æ—¥ä»˜ã¨æ™‚é–“ã‚’æ›¸ãè¾¼ã‚€
   var targetRow = lastRow + 1;
   sheet.getRange(targetRow, DATE_COL).setValue(today);
   writeTime(e, sheet, targetRow);
@@ -60,9 +64,9 @@ function writeTime(e, sheet, targetRow) {
 }
 
 function postMessage(slackApp, e) {
-  var botName = PropertiesService.getScriptProperties().getProperty('BOT_NAME');
-  var icon_url = PropertiesService.getScriptProperties().getProperty('ICON_URL');
-  return slackApp.postMessage("#‹Î‘ÓŠÇ—", createMessage(e), {
+  var botName = getProperty("BOT_NAME");
+  var icon_url = getProperty("ICON_URL");
+  return slackApp.postMessage("#å‹¤æ€ ç®¡ç†", createMessage(e), {
     username: botName,
     icon_url: icon_url
   });
@@ -70,15 +74,21 @@ function postMessage(slackApp, e) {
 
 function createMessage(e) {
   if (isAttendance(e)) {
-    return today + "‚ÌoĞŠÔ‚Í" + time + "‚Å‹L˜^‚µ‚Ü‚µ‚½:sunny:";
+    body = e.parameter.user_name + "ã¯" + time + "ã«å‡ºç¤¾ã—ã¾ã—ãŸã€‚";
+    return today + "ã®å‡ºç¤¾æ™‚é–“ã¯" + time + "ã§è¨˜éŒ²ã—ã¾ã—ãŸ:sunny:";
   }
-  return today + "‚Ì‘ŞĞŠÔ‚Í" + time + "‚Å‹L˜^‚µ‚Ü‚µ‚½:night_with_stars:";
+  body = e.parameter.user_name + "ã¯" + time + "ã«é€€ç¤¾ã—ã¾ã—ãŸã€‚";
+  return today + "ã®é€€ç¤¾æ™‚é–“ã¯" + time + "ã§è¨˜éŒ²ã—ã¾ã—ãŸ:night_with_stars:";
 }
 
 function isAttendance(e) {
-  return e.parameter.trigger_word == PropertiesService.getScriptProperties().getProperty('TRIGGER_WORD');;
+  return e.parameter.trigger_word == getProperty("TRIGGER_WORD");;
 }
 
 function formatDate(date) {
-  return Utilities.formatDate(date, 'JST', 'yyyy”NMŒd“ú')
+  return Utilities.formatDate(date, 'JST', 'yyyyå¹´Mæœˆdæ—¥')
+}
+
+function getProperty(key) {
+  return PropertiesService.getScriptProperties().getProperty(key);
 }
