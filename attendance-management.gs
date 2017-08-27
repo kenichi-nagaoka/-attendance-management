@@ -75,10 +75,10 @@ function postMessage(slackApp, e) {
 function createMessage(e) {
   if (isAttendance(e)) {
     body = e.parameter.user_name + "は" + time + "に出社しました。";
-    return today + "の出社時間は" + time + "で記録しました:sunny:";
+    return today + "の出社時間は" + time + "で記録しました。";
   }
   body = e.parameter.user_name + "は" + time + "に退社しました。";
-  return today + "の退社時間は" + time + "で記録しました:night_with_stars:";
+  return today + "の退社時間は" + time + "で記録しました。";
 }
 
 function isAttendance(e) {
