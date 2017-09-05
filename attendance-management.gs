@@ -11,14 +11,12 @@ function doPost(e) {
   // メッセージを入力した日時をリクエストパラメータから算出
   calcDateTime(e);
 
-  // SpreadSheetに書き込み
   writeSpreadsheet(e);
   
   // Slack API(chat.postMessage)で指定したチャンネルに通知メッセージ
   postMessage(createSlackApp(), e);
   
   MailApp.sendEmail(getProperty("TO"), "【勤怠連絡】" + today, body);
-
 }
 
 function createSlackApp() {
